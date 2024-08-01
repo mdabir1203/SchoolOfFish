@@ -1,4 +1,5 @@
 # SchoolOfFish
+![sof](https://github.com/user-attachments/assets/637d2cc3-f1ed-4f1a-889d-e419f068dd28)
 
 A mesmerizing and interactive 3D-like School of Fish visualization built with HTML5 Canvas and JavaScript. This project showcases the collective behavior of fish, simulating realistic movement and interaction with the mouse.
 

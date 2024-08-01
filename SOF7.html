@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engaging 3D-like School of Fish Visualization</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #001220; }
+        canvas { display: block; }
+        #numberingBoard {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+            background: rgba(0, 18, 32, 0.7);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            font-size: 18px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fishCanvas"></canvas>
+    <div id="numberingBoard">Fish Interaction: <span id="fishCount">0</span></div>
+    <script>
+        // JavaScript code remains unchanged until the end of the `animate` function
+        const canvas = document.getElementById('fishCanvas');
+        const ctx = canvas.getContext('2d');
+        const offscreenCanvas = document.createElement('canvas');
+        const offscreenCtx = offscreenCanvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            offscreenCanvas.width = canvas.width;
+            offscreenCanvas.height = canvas.height;
+        }
+
+        resizeCanvas();
+
+        let mouseX = canvas.width / 2;
+        let mouseY = canvas.height / 2;
+        let attractionMode = true; // true for attraction, false for repulsion
+
+        class Fish {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.z = Math.random() * 200 - 100;
+                this.size = 15 + Math.random() * 10; // Increased base size
+                this.speed = 1 + Math.random() * 2;
+                this.yaw = Math.random() * Math.PI * 2;
+                this.pitch = Math.random() * Math.PI / 6 - Math.PI / 12;
+                this.color = `hsl(${180 + Math.random() * 60}, ${70 + Math.random() * 30}%, ${50 + Math.random() * 20}%)`;
+            }
+
+            update(fishes, deltaTime) {
+                const moveAmount = this.speed * deltaTime / 16;
+                this.x += Math.cos(this.yaw) * Math.cos(this.pitch) * moveAmount;
+                this.y += Math.sin(this.pitch) * moveAmount;
+                this.z += Math.sin(this.yaw) * Math.cos(this.pitch) * moveAmount;
+
+                this.x = (this.x + canvas.width) % canvas.width;
+                this.y = (this.y + canvas.height) % canvas.height;
+                this.z = ((this.z + 100) % 200) - 100;
+
+                let avgYaw = 0, avgPitch = 0, avgX = 0, avgY = 0, avgZ = 0, count = 0;
+                for (let other of fishes) {
+                    if (other !== this) {
+                        const dx = other.x - this.x;
+                        const dy = other.y - this.y;
+                        const dz = other.z - this.z;
+                        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                        if (dist < 50) {
+                            avgYaw += other.yaw;
+                            avgPitch += other.pitch;
+                            avgX += other.x;
+                            avgY += other.y;
+                            avgZ += other.z;
+                            count++;
+                        }
+                    }
+                }
+
+                if (count > 0) {
+                    this.yaw += Math.atan2(Math.sin(avgYaw / count - this.yaw), Math.cos(avgYaw / count - this.yaw)) * 0.05;
+                    this.pitch += Math.atan2(Math.sin(avgPitch / count - this.pitch), Math.cos(avgPitch / count - this.pitch)) * 0.05;
+                    this.x += (avgX / count - this.x) * 0.01;
+                    this.y += (avgY / count - this.y) * 0.01;
+                    this.z += (avgZ / count - this.z) * 0.01;
+                }
+
+                if (Math.random() < 0.05) {
+                    this.yaw += (Math.random() - 0.5) * 0.5;
+                    this.pitch += (Math.random() - 0.5) * 0.2;
+                }
+
+                this.pitch = Math.max(-Math.PI / 4, Math.min(Math.PI / 4, this.pitch));
+
+                // Interaction with mouse
+                const mouseDx = mouseX - this.x;
+                const mouseDy = mouseY - this.y;
+                const mouseDist = Math.sqrt(mouseDx * mouseDx + mouseDy * mouseDy);
+
+                if (mouseDist < 150) {
+                    const angleToMouse = Math.atan2(mouseDy, mouseDx);
+                    if (attractionMode) {
+                        this.yaw += (angleToMouse - this.yaw) * 0.1;
+                        this.x += (mouseDx) * 0.01;
+                        this.y += (mouseDy) * 0.01;
+                    } else {
+                        this.yaw += (angleToMouse + Math.PI - this.yaw) * 0.1;
+                        this.x -= (mouseDx) * 0.01;
+                        this.y -= (mouseDy) * 0.01;
+                    }
+                }
+            }
+
+            draw(ctx) {
+                const scale = 1.0 + (this.z + 100) / 200; // Increased scale factor
+                const alpha = scale * 0.7;
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.yaw);
+                ctx.scale(scale, scale);
+
+                // Fish body
+                ctx.beginPath();
+                ctx.moveTo(-this.size, 0);
+                ctx.quadraticCurveTo(0, -this.size / 2, this.size, 0);
+                ctx.quadraticCurveTo(0, this.size / 2, -this.size, 0);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = alpha;
+                ctx.fill();
+
+                // Tail
+                ctx.beginPath();
+                ctx.moveTo(-this.size, 0);
+                ctx.lineTo(-this.size * 1.5, -this.size / 3);
+                ctx.lineTo(-this.size * 1.5, this.size / 3);
+                ctx.closePath();
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = alpha * 0.8;
+                ctx.fill();
+
+                // Eye
+                ctx.beginPath();
+                ctx.arc(this.size / 2, -this.size / 4, this.size / 10, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.globalAlpha = alpha;
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        const fishCount = 200;
+        const fishes = Array.from({ length: fishCount }, () => new Fish());
+
+        function drawWaterEffect() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, 'rgba(0, 18, 32, 0.2)');
+            gradient.addColorStop(1, 'rgba(0, 18, 32, 0.8)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < 50; i++) {
+                ctx.beginPath();
+                ctx.arc(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height,
+                    Math.random() * 2,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fill();
+            }
+        }
+
+        function drawRippleEffect(x, y) {
+            const maxRadius = 100;
+            const rippleCount = 5;
+            const rippleSpacing = 20;
+            const rippleAlpha = 0.3;
+
+            for (let i = 0; i < rippleCount; i++) {
+                const radius = maxRadius - i * rippleSpacing;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${rippleAlpha - i * (rippleAlpha / rippleCount)})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        let lastTime = 0;
+        function animate(currentTime) {
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+
+            offscreenCtx.clearRect(0, 0, canvas.width, canvas.height);
+            drawWaterEffect();
+            
+            for (let fish of fishes) {
+                fish.update(fishes, deltaTime);
+                fish.draw(offscreenCtx);
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(offscreenCanvas, 0, 0);
+            drawRippleEffect(mouseX, mouseY);
+
+            requestAnimationFrame(animate);
+        }
+
+        requestAnimationFrame(animate);
+
+        window.addEventListener('resize', resizeCanvas);
+
+        canvas.addEventListener('mousemove', (event) => {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+
+        canvas.addEventListener('click', () => {
+            attractionMode = !attractionMode;
+        });
+        // Function to count the number of fish interacting with the mouse
+        function countFishNearMouse() {
+            let count = 0;
+            for (let fish of fishes) {
+                const dx = mouseX - fish.x;
+                const dy = mouseY - fish.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 150) { // Same distance threshold as in Fish.update
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        function animate(currentTime) {
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+
+            offscreenCtx.clearRect(0, 0, canvas.width, canvas.height);
+            drawWaterEffect();
+            
+            for (let fish of fishes) {
+                fish.update(fishes, deltaTime);
+                fish.draw(offscreenCtx);
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(offscreenCanvas, 0, 0);
+            drawRippleEffect(mouseX, mouseY);
+
+            // Update the numbering board with the count of interacting fish
+            const fishCount = countFishNearMouse();
+            document.getElementById('fishCount').textContent = fishCount;
+
+            requestAnimationFrame(animate);
+        }
+
+        requestAnimationFrame(animate);
+
+        // Event listeners
+        window.addEventListener('resize', resizeCanvas);
+        canvas.addEventListener('mousemove', (event) => {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+        canvas.addEventListener('click', () => {
+            attractionMode = !attractionMode;
+        });
+    </script>
+</body> 
+</html>

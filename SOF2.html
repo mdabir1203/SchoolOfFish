@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D-like School of Fish Visualization</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #001220; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="fishCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('fishCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        class Fish {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.z = Math.random() * 200 - 100; // Depth
+                this.size = 5 + Math.random() * 5;
+                this.speed = 1 + Math.random() * 2;
+                this.angle = Math.random() * Math.PI * 2;
+                this.yaw = Math.random() * Math.PI * 2; // Horizontal rotation
+                this.pitch = Math.random() * Math.PI / 6 - Math.PI / 12; // Vertical rotation
+                this.color = `hsl(${200 + Math.random() * 40}, 100%, 50%)`;
+            }
+
+            update(fishes) {
+                // Move fish
+                this.x += Math.cos(this.yaw) * Math.cos(this.pitch) * this.speed;
+                this.y += Math.sin(this.pitch) * this.speed;
+                this.z += Math.sin(this.yaw) * Math.cos(this.pitch) * this.speed;
+
+                // Wrap around edges
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.z < -100) this.z = 100;
+                if (this.z > 100) this.z = -100;
+
+                // Flocking behavior
+                let avgYaw = 0, avgPitch = 0, avgX = 0, avgY = 0, avgZ = 0, count = 0;
+                fishes.forEach(other => {
+                    if (other !== this) {
+                        const dx = other.x - this.x;
+                        const dy = other.y - this.y;
+                        const dz = other.z - this.z;
+                        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                        if (dist < 50) {
+                            avgYaw += other.yaw;
+                            avgPitch += other.pitch;
+                            avgX += other.x;
+                            avgY += other.y;
+                            avgZ += other.z;
+                            count++;
+                        }
+                    }
+                });
+
+                if (count > 0) {
+                    this.yaw += (avgYaw / count - this.yaw) * 0.05;
+                    this.pitch += (avgPitch / count - this.pitch) * 0.05;
+                    this.x += (avgX / count - this.x) * 0.01;
+                    this.y += (avgY / count - this.y) * 0.01;
+                    this.z += (avgZ / count - this.z) * 0.01;
+                }
+
+                // Random movement
+                if (Math.random() < 0.05) {
+                    this.yaw += (Math.random() - 0.5) * 0.5;
+                    this.pitch += (Math.random() - 0.5) * 0.2;
+                }
+
+                // Constrain pitch
+                this.pitch = Math.max(-Math.PI/4, Math.min(Math.PI/4, this.pitch));
+            }
+
+            draw() {
+                const scale = 1 + (this.z + 100) / 200; // Scale based on depth
+                const alpha = scale * 0.5; // Opacity based on depth
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.yaw);
+                ctx.scale(scale, scale);
+
+                // Fish body
+                ctx.beginPath();
+                ctx.moveTo(-this.size, 0);
+                ctx.lineTo(this.size, 0);
+                ctx.lineTo(0, -this.size / 2);
+                ctx.closePath();
+                ctx.fillStyle = `${this.color}`;
+                ctx.globalAlpha = alpha;
+                ctx.fill();
+
+                // Tail
+                ctx.beginPath();
+                ctx.moveTo(-this.size, 0);
+                ctx.lineTo(-this.size * 1.5, -this.size / 4);
+                ctx.lineTo(-this.size * 1.5, this.size / 4);
+                ctx.closePath();
+                ctx.fillStyle = `${this.color}`;
+                ctx.globalAlpha = alpha * 0.8;
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        const fishCount = 200;
+        const fishes = Array.from({ length: fishCount }, () => new Fish());
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 18, 32, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            fishes.forEach(fish => {
+                fish.update(fishes);
+                fish.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // Resize canvas when window is resized
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
+

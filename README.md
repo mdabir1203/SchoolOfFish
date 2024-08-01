@@ -13,28 +13,46 @@ The development of this project was significantly enhanced by leveraging the cap
 ### Iteration 1: Initial Concept and Setup
 - **GPT-4** helped define the initial project structure and set up the HTML5 canvas.
 - **Claude.AI** provided suggestions on the basic layout and styling to create a visually appealing background.
+  
+
+https://github.com/user-attachments/assets/51f6c223-1696-4662-b852-c73cf38b3415
+
+
 
 ### Iteration 2: Basic Fish Movement
 - **GPT-4** assisted in implementing the core logic for fish movement, including random initialization and basic update functions.
 - **Claude.AI** contributed by optimizing the movement algorithm for smoother transitions.
+  
 
-### Iteration 3: 3D-like Effects
+https://github.com/user-attachments/assets/e1004a58-bfd1-4ad8-814b-3047fd00621e
+
+
+
+### Iteration 3: 3D-like Large Fish Effects
 - **GPT-4** suggested techniques to simulate a 3D effect using size and z-index variations.
 - **Claude.AI** refined these suggestions, ensuring the fish appeared more dynamic and lifelike.
+
+
+https://github.com/user-attachments/assets/3eb14cca-b23c-4844-ae87-d30bea70d7b6
+
 
 ### Iteration 4: Mouse Interaction
 - **GPT-4** provided the initial code for mouse interaction, allowing fish to be attracted or repelled by the mouse pointer.
 - **Claude.AI** enhanced this functionality by fine-tuning the interaction radius and responsiveness.
 
-### Iteration 5: Visual Enhancements
+
+https://github.com/user-attachments/assets/5f5cd1b6-5278-46a4-adb0-603df1932e1a
+
+
+### Iteration 5: Visual Enhancements + Interaction
 - **GPT-4** recommended adding water and ripple effects to enhance the visual experience.
 - **Claude.AI** helped implement these effects, ensuring they blended seamlessly with the fish movement.
 
-### Iteration 6: Performance Optimization
-- **GPT-4** identified performance bottlenecks and suggested optimization techniques.
-- **Claude.AI** provided additional tips on using offscreen canvases to reduce rendering overhead.
 
-### Iteration 7: Final Touches and Bug Fixes
+https://github.com/user-attachments/assets/c6857c01-d00f-4e25-a06c-da0ce73403f3
+
+
+### Iteration 6: Final Touches and Bug Fixes
 - **GPT-4** assisted in the final review, identifying and fixing any remaining bugs.
 - **Claude.AI** contributed to polishing the code, ensuring readability and maintainability.
 
